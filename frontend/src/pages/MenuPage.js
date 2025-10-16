@@ -12,7 +12,10 @@ const MenuPage = () => {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/menu/${restaurantId}`);
+        // DEĞİŞİKLİK BURADA:
+        // Tıpkı AuthContext'teki gibi, dinamik bir API adresi tanımlıyoruz.
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+        const response = await axios.get(`${apiUrl}/api/menu/${restaurantId}`);
         setMenuItems(response.data);
       } catch (err) {
         setError('Menü yüklenirken bir hata oluştu.');
@@ -20,7 +23,9 @@ const MenuPage = () => {
         setLoading(false);
       }
     };
-    if (restaurantId) { fetchMenu(); }
+    if (restaurantId) {
+      fetchMenu();
+    }
   }, [restaurantId]);
 
   const groupedMenu = menuItems.reduce((acc, item) => {
