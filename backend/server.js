@@ -1,9 +1,9 @@
-// backend/server.js - FİNAL CANLI ORTAM VERSİYONU (KALICI OTURUM)
+// backend/server.js - FİNAL CANLI ORTAM VERSİYONU (PROXY GÜVENİ AKTİF)
 
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
-const MongoStore = require('connect-mongo'); // <-- YENİ KÜTÜPHANE
+const MongoStore = require('connect-mongo');
 require('dotenv').config();
 const connectDB = require('./db/connection');
 const uploadCloud = require('./config/cloudinary');
@@ -28,18 +28,19 @@ app.use(cors({
   credentials: true
 }));
 
+// --- YENİ EKLENEN SATIR BURADA ---
+// Render gibi proxy'lerin arkasında çalışırken session'ın doğru çalışması için gereklidir.
 app.set('trust proxy', 1);
-app.use(express.json());
+// --- YENİ EKLENEN SATIR SONA ERDİ ---
 
-// --- OTURUM AYARLARI GÜNCELLENDİ ---
+app.use(express.json());
 app.use(session({
   secret: 'bu-cok-gizli-bir-anahtar-olmalı-ve-degistirilmeli',
   resave: false,
   saveUninitialized: false,
-  // Oturumları RAM yerine MongoDB'ye kaydet
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
-    collectionName: 'sessions' // Oturumların saklanacağı koleksiyonun adı
+    collectionName: 'sessions'
   }),
   cookie: {
     secure: true,
@@ -48,7 +49,6 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 24 // 1 gün
   }
 }));
-// --- GÜNCELLEME SONA ERDİ ---
 
 // Yükleme ve diğer rotalar...
 app.post('/api/upload', uploadCloud.single('image'), (req, res) => {
