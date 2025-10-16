@@ -1,0 +1,29 @@
+/* src/pages/RestaurantAdminPage.css */
+.qr-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qr-modal-content {
+  background: white;
+  padding: 40px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.qr-modal-content h3 {
+    margin-top: 0;
+}
+
+.qr-modal-content a {
+    display: block;
+    margin-top: 15px;
+    word-break: break-all;
+}
