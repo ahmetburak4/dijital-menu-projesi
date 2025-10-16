@@ -1,8 +1,9 @@
-// backend/server.js - FİNAL CANLI ORTAM VERSİYONU
+// backend/server.js - FİNAL CANLI ORTAM VERSİYONU (KALICI OTURUM)
 
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
+const MongoStore = require('connect-mongo'); // <-- YENİ KÜTÜPHANE
 require('dotenv').config();
 const connectDB = require('./db/connection');
 const uploadCloud = require('./config/cloudinary');
@@ -21,25 +22,25 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) { callback(null, true); } 
+    else { callback(new Error('Not allowed by CORS')); }
   },
   credentials: true
 }));
 
-// --- YENİ EKLENEN SATIR BURADA ---
-// Render gibi proxy'lerin arkasında çalışırken session'ın doğru çalışması için gereklidir.
 app.set('trust proxy', 1);
-// --- YENİ EKLENEN SATIR SONA ERDİ ---
-
 app.use(express.json());
+
+// --- OTURUM AYARLARI GÜNCELLENDİ ---
 app.use(session({
   secret: 'bu-cok-gizli-bir-anahtar-olmalı-ve-degistirilmeli',
   resave: false,
   saveUninitialized: false,
+  // Oturumları RAM yerine MongoDB'ye kaydet
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: 'sessions' // Oturumların saklanacağı koleksiyonun adı
+  }),
   cookie: {
     secure: true,
     httpOnly: true,
@@ -47,6 +48,7 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 24 // 1 gün
   }
 }));
+// --- GÜNCELLEME SONA ERDİ ---
 
 // Yükleme ve diğer rotalar...
 app.post('/api/upload', uploadCloud.single('image'), (req, res) => {
