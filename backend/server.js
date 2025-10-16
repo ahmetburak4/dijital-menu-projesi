@@ -1,4 +1,4 @@
-// backend/server.js - CANLI ORTAM İÇİN GÜNCELLENDİ
+// backend/server.js - FİNAL CANLI ORTAM VERSİYONU
 
 const express = require('express');
 const cors = require('cors');
@@ -14,8 +14,6 @@ const authRoutes = require('./routes/auth');
 connectDB();
 const app = express();
 
-// --- DEĞİŞİKLİK BURADA ---
-// Artık hem localhost'tan hem de canlı Vercel sitemizden gelen isteklere izin veriyoruz.
 const allowedOrigins = [
   'http://localhost:3000',
   'https://dijital-menu-projesi-iis9tay75-ahmet-buraks-projects-c6fdec2d.vercel.app'
@@ -23,7 +21,6 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Eğer gelen istek bu listelerden birindeyse veya bir API test aracıysa (origin yoksa) izin ver
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -32,26 +29,28 @@ app.use(cors({
   },
   credentials: true
 }));
-// --- DEĞİŞİKLİK SONA ERDİ ---
+
+// --- YENİ EKLENEN SATIR BURADA ---
+// Render gibi proxy'lerin arkasında çalışırken session'ın doğru çalışması için gereklidir.
+app.set('trust proxy', 1);
+// --- YENİ EKLENEN SATIR SONA ERDİ ---
 
 app.use(express.json());
 app.use(session({
-  secret: 'bu-cok-gizli-bir-anahtar-olmalı', // Canlıda bunu .env'ye taşımak en iyisidir
+  secret: 'bu-cok-gizli-bir-anahtar-olmalı-ve-degistirilmeli',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: true, // Canlıda (HTTPS) true olmalı
+    secure: true,
     httpOnly: true,
-    sameSite: 'none', // Tarayıcılar arası cookie için
-    maxAge: 1000 * 60 * 60 * 24
+    sameSite: 'none',
+    maxAge: 1000 * 60 * 60 * 24 // 1 gün
   }
 }));
 
 // Yükleme ve diğer rotalar...
 app.post('/api/upload', uploadCloud.single('image'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'Lütfen bir dosya seçin.' });
-  }
+  if (!req.file) { return res.status(400).json({ message: 'Lütfen bir dosya seçin.' }); }
   res.status(200).json({ secure_url: req.file.path });
 });
 app.get('/', (req, res) => res.send('Dijital Menü Backend Sunucusu Çalışıyor!'));
