@@ -1,4 +1,5 @@
 // src/App.js
+// Son senkronizasyon deploy testi
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
