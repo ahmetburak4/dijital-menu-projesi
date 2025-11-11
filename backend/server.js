@@ -1,9 +1,9 @@
-// backend/server.js - FİNAL CANLI ORTAM VERSİYONU (PROXY GÜVENİ AKTİF)
+// backend/server.js - FİNAL CANLI ORTAM KODU
 
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const MongoStore = require('connect-mongo'); // KALICI OTURUM İÇİN EKLENDİ
 require('dotenv').config();
 const connectDB = require('./db/connection');
 const uploadCloud = require('./config/cloudinary');
@@ -15,6 +15,7 @@ const authRoutes = require('./routes/auth');
 connectDB();
 const app = express();
 
+// Sadece bu adreslerden gelen isteklere izin ver
 const allowedOrigins = [
   'http://localhost:3000',
   'https://dijital-menu-projesi-iis9tay75-ahmet-buraks-projects-c6fdec2d.vercel.app'
@@ -28,29 +29,31 @@ app.use(cors({
   credentials: true
 }));
 
-// --- YENİ EKLENEN SATIR BURADA ---
-// Render gibi proxy'lerin arkasında çalışırken session'ın doğru çalışması için gereklidir.
+// Render gibi proxy'lerin (vekil sunucuların) arkasında çalışmak için
 app.set('trust proxy', 1);
-// --- YENİ EKLENEN SATIR SONA ERDİ ---
 
 app.use(express.json());
+
+// OTURUM AYARLARI GÜNCELLENDİ
 app.use(session({
   secret: 'bu-cok-gizli-bir-anahtar-olmalı-ve-degistirilmeli',
   resave: false,
   saveUninitialized: false,
+  // Oturumları "hafıza kaybı yaşayan" RAM yerine, kalıcı MongoDB'ye kaydet
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
-    collectionName: 'sessions'
+    collectionName: 'sessions' // Oturumların saklanacağı koleksiyonun adı
   }),
   cookie: {
-    secure: true,
+    secure: true,      // HTTPS için
     httpOnly: true,
-    sameSite: 'none',
+    sameSite: 'none',  // Farklı domainler arası (Vercel -> Render) için
     maxAge: 1000 * 60 * 60 * 24 // 1 gün
   }
 }));
+// --- GÜNCELLEME SONA ERDİ ---
 
-// Yükleme ve diğer rotalar...
+// --- ROTALAR ---
 app.post('/api/upload', uploadCloud.single('image'), (req, res) => {
   if (!req.file) { return res.status(400).json({ message: 'Lütfen bir dosya seçin.' }); }
   res.status(200).json({ secure_url: req.file.path });
@@ -59,6 +62,7 @@ app.get('/', (req, res) => res.send('Dijital Menü Backend Sunucusu Çalışıyo
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/restaurants', restaurantRoutes);
+// --- ROTALAR SONA ERDİ ---
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Sunucu ${PORT} portunda başarıyla başlatıldı.`));
